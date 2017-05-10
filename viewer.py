@@ -18,27 +18,33 @@ class Main(Gtk.Window):
     - pole do wpisania numeru
     - obrazek
     - przyciski
-    - suwak do skali
+    - suwak do skali.
     """
     def __init__(self):
+        """Konstruktor klasy dziedziczy po Gtk.Window, jego zadanie jest przygotowanie
+        okna, w ktorym wyswietla sie obrazek wraz z przyciskami nawigacyjnymi."""
         Gtk.Window.__init__(self)
         self.set_title("XKCD viewer")
         self.set_size_request(500, 300)
+        # glowny kontener
         self.box = Gtk.VBox()
         self.add(self.box)
         self.box.show()
-
+        # kontener dla obrazka
         self.image_box = Gtk.VBox()
-
         self.hbox = Gtk.HBox()
+        # kontener dla nawigacji
         self.navi_box = Gtk.HBox()
-        self.navi_box.set_size_request(300, 50)
+        # kontener dla tytulu
         self.title_box = Gtk.VBox(spacing=10)
         self.box.pack_start(self.hbox, False, False, 0)
         self.hbox.show()
+        # bufor dla obrazka
         self.pic = GdkPixbuf.Pixbuf()
+        # scroll window, w ktorym bedzie obrazek
         self.scroll_window = Gtk.ScrolledWindow()
-        self.scroll_window.set_size_request(800,300)
+        self.scroll_window.set_size_request(800, 500)
+        # obiekt dla obrazka
         self.image = Gtk.Image()
         self.title_label = Gtk.Label()
         self.number_label = Gtk.Label()
@@ -47,12 +53,9 @@ class Main(Gtk.Window):
         self.image_box.add(self.image)
         self.image_box.show()
         self.box.add(self.title_box)
-
         self.scroll_window.add(self.image_box)
         self.box.add(self.scroll_window)
-
         self.box.pack_start(self.navi_box, False, False, 0)
-
         self.num_label = Gtk.Label("Podaj numer: ")
         self.num_entry = Gtk.Entry()
         self.go_button = Gtk.Button("Pokaz")
@@ -61,7 +64,6 @@ class Main(Gtk.Window):
         self.hbox.add(self.num_label)
         self.hbox.add(self.num_entry)
         self.hbox.add(self.go_button)
-
         self.previous_button = Gtk.Button('Poprzedni')
         self.previous_button.set_size_request(100, 50)
         self.previous_button.connect('clicked', lambda x: self.show_image_direction('prev'))
@@ -72,27 +74,26 @@ class Main(Gtk.Window):
         self.next_button.set_size_request(100, 50)
         self.next_button.connect('clicked', lambda x: self.show_image_direction('next'))
 
-        ad1 = Gtk.Adjustment(20, 20, 200, 20, 20, 0)
-
+        # stworzenie skali do regulacji rozmiarem obrazka
+        adjustment = Gtk.Adjustment(40, 40, 200, 20, 20, 0)
         self.h_scale = Gtk.Scale(
-            orientation=Gtk.Orientation.HORIZONTAL, adjustment=ad1)
+            orientation=Gtk.Orientation.HORIZONTAL, adjustment=adjustment)
         self.h_scale.set_digits(0)
         self.h_scale.set_hexpand(True)
         self.h_scale.set_valign(Gtk.Align.START)
         self.h_scale.connect("value-changed", self.scale_moved)
-
         self.box.add(self.h_scale)
 
         self.navi_box.add(self.previous_button)
         self.navi_box.add(self.random_button)
         self.navi_box.add(self.next_button)
 
+        # pokazanie najnowszego obrazka przy starcie
         self.show_image("")
         self.show()
         self.connect('destroy', Gtk.main_quit)
-
+        # parsowanie strony glownej
         self.soup = XKCD.load_soup(URL)
-        self.random_limit = ""
 
     def scale_moved(self, event):
 
@@ -217,7 +218,7 @@ class XKCD:
                 print "Try again later"
             if e.code == 404:
                 print "Blad 404"
-                dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.INFO,
+                dialog = Gtk.MessageDialog(None, 0, Gtk.MessageType.INFO,
                                            Gtk.ButtonsType.OK, "Nie ma takiego obrazka")
                 dialog.format_secondary_text(
                     "Podaj inny numer")
