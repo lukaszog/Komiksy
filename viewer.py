@@ -1,3 +1,4 @@
+# coding=utf-8
 import gi
 
 gi.require_version('Gtk', '3.0')
@@ -96,26 +97,30 @@ class Main(Gtk.Window):
         self.soup = XKCD.load_soup(URL)
 
     def scale_moved(self, event):
-
+        """Funkcja dokonuje przeskalowania obrazku, wedlug parametru scale."""
+        # obliczanie skali
         scale = int(self.h_scale.get_value()) / 100.0
-        self.image.set_from_pixbuf(self.pic.scale_simple(self.pic.get_width() * scale, self.pic.get_height() * scale, 2))
+        self.image.set_from_pixbuf(self.pic.scale_simple(self.pic.get_width() * scale,
+                                                         self.pic.get_height() * scale, 2))
 
     def show_image(self, number):
+        """Funkcja odpowiedzialna za wyswietlenie obrazka w oknie."""
 
+        # pobranie obrazka
         url, title, number = XKCD.get_image(number)
 
         is_image, filename = "", ""
+        # sprawdzenie czy obrazek ktory chcemy wyswietlic znajduje sie w katalogu
         for f in glob.glob('cache/' + number + "_*.png"):
             is_image = 1
             filename = f
-
+        # jezeli obrazek zostal znaleziony w katalogu jest wyswietlany
         if is_image == 1:
             image_path = filename
             self.pic = self.pic.new_from_file(image_path)
             self.image.set_from_pixbuf(self.pic)
-            print "Wyswietlam: {}".format(image_path)
         else:
-            print "Obrazek jest pobierany..."
+            # w przeciwnym wypadku pobieramy obrazek z sieci
             XKCD.save_image(url, number)
             response = urllib2.urlopen(str(url))
             loader = GdkPixbuf.PixbufLoader()
@@ -126,31 +131,32 @@ class Main(Gtk.Window):
         self.set_title(title)
         self.number_label.set_markup('Numer obrazka: ' + number)
         self.title_label.set_markup('Tytul: <b>' + title + '</b>')
-        print "Numer: ", number
+        # update aktualnej strony
         self.soup = XKCD.load_soup(URL + '/' + number)
         self.image.show()
 
     def show_image_direction(self, move):
-
+        """Pobranie obrazka w zaleznosci od kliknietego przycisku {Nastepnny, Losowy, Poprzedni}."""
         image_url = XKCD.get_image_direction(self.soup, move)
 
-        print "Direction url", image_url
         if image_url is None:
             return
         image_number = image_url.split('//')[1].split('/')[1]
         print image_url
         self.soup = XKCD.load_soup(image_url)
+        # wyswietlenie obrazka
         self.show_image(image_number)
 
 
 class XKCD:
-
+    """Klasa odpowiedzialna za pobieranie danych ze strony xkcd.com."""
     def __init__(self):
         pass
 
     @staticmethod
     def get_image_direction(soup, move):
-
+        """Pobranie danych o obrazku w zaleznosci od kliknietego przycisku, dane dla soup sa podawane
+        na podstawie kodu HTML strony."""
         if move == 'prev':
             image_url = soup.find("a", {"href": True, "accesskey": "p"})["href"]
         elif move == 'next':
@@ -169,9 +175,7 @@ class XKCD:
 
     @staticmethod
     def save_image(url, number):
-
-        print "Url do zapisu {}".format(url)
-
+        """Funkcja, ktora pobiera obrazek do katalogu cache."""
         try:
             page = urllib2.urlopen(url)
         except urllib2.HTTPError:
@@ -181,27 +185,29 @@ class XKCD:
             os.makedirs(DIR)
 
         image_number = url.split('//')[1].split('/')[2]
-        save_file = open(os.path.join(DIR, number+"_"+image_number), "wb")
-        save_file.write(page.read())
-        save_file.close()
-
+        # zapisanie obrazka do katalogu
+        with open(os.path.join(DIR, number+"_"+image_number), "wb") as f:
+            f.write(page.read())
+            f.close()
         print "Zapisuje plik o numerze: {} i tytule {}".format(number, image_number)
 
     @staticmethod
     def get_image(number):
+        """Funkcja, ktora pobiera obrazek z danego adresu url."""
         soup = XKCD.load_soup(URL + '/' + number)
         if isinstance(soup, BeautifulSoup):
             image_title = soup.find("div", {"id": "ctitle"})
 
+            # wyszukiwanie numeru obrazka glownego
             for br in soup.findAll('br'):
-                next_s = br.nextSibling
-                if not (next_s and isinstance(next_s, NavigableString)):
+                next_br_tag = br.nextSibling
+                if not (next_br_tag and isinstance(next_br_tag, NavigableString)):
                     continue
-                next2_s = next_s.nextSibling
+                next2_s = next_br_tag.nextSibling
                 if next2_s and isinstance(next2_s, Tag) and next2_s.name == 'br':
-                    text = str(next_s).strip()
+                    text = str(next_br_tag).strip()
                     if text:
-                        image_number = next_s.split('//')[1].split('/')[1]
+                        image_number = next_br_tag.split('//')[1].split('/')[1]
 
             image_url = soup.find("img", {"src": True, "alt": True, "title": True})["src"]
             print image_url
@@ -209,13 +215,15 @@ class XKCD:
 
     @staticmethod
     def load_soup(url):
+        """Funkcja odpowiedzialna za przygotowanie danej strony do parsowania przez BeautyfoulSoup."""
         try:
             page = urllib2.urlopen(url)
         except urllib2.HTTPError as e:
+            # W razie zapytania o strone ktora nie istnieje zwracany jest error 404
             print "Error"
             print e
             if e.code == 403:
-                print "Try again later"
+                print "Sproboj pozniej"
             if e.code == 404:
                 print "Blad 404"
                 dialog = Gtk.MessageDialog(None, 0, Gtk.MessageType.INFO,
@@ -226,10 +234,12 @@ class XKCD:
                 dialog.destroy()
                 return
             return
+        # parsowanie bierzacej strony
         soup = BeautifulSoup(page.read())
         return soup
 
 if __name__ == "__main__":
+    # uruchomienie aplikacji
     win = Main()
     win.show_all()
     Gtk.main()
