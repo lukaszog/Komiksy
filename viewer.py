@@ -24,8 +24,6 @@ class Main(Gtk.Window):
         self.navi_box.set_size_request(300, 50)
         self.title_box = Gtk.VBox(spacing=10)
         self.box.pack_start(self.hbox, False, False, 0)
-        self.box.add(self.navi_box)
-        self.box.add(self.title_box)
         self.hbox.show()
         self.image = Gtk.Image()
         self.title_label = Gtk.Label()
@@ -34,7 +32,12 @@ class Main(Gtk.Window):
         self.title_box.add(self.title_label)
         self.image_box.add(self.image)
         self.image_box.show()
+        self.box.add(self.title_box)
+
         self.box.add(self.image_box)
+
+        self.box.pack_start(self.navi_box, False, False, 0)
+
         self.num_label = Gtk.Label("Podaj numer: ")
         self.num_entry = Gtk.Entry()
         self.go_button = Gtk.Button("Pokaz")
