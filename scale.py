@@ -1,41 +1,45 @@
-import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GdkPixbuf
+from gi.repository import Gtk
+import sys
 
-class ScaleImage:
-    def __init__(self):
-        self.temp_height = 0
-        self.temp_width = 0
 
-        window = Gtk.Window()
+class MyWindow(Gtk.ApplicationWindow):
+
+    def __init__(self, app):
+        Gtk.Window.__init__(
+            self, title="ScrolledWindow Example", application=app)
+        self.set_default_size(200, 200)
+
+        # the scrolledwindow
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_border_width(10)
+        # there is always the scrollbar (otherwise: AUTOMATIC - only if needed
+        # - or NEVER)
+        scrolled_window.set_policy(
+            Gtk.PolicyType.ALWAYS, Gtk.PolicyType.ALWAYS)
+
+        # an image - slightly larger than the window...
         image = Gtk.Image()
-        image.set_from_file('cache/730_circuit_diagram.png')
-        self.pixbuf = image.get_pixbuf()
-        drawing_area = Gtk.DrawingArea()
-        drawing_area.set_size_request(300, 300)
-        drawing_area.connect('expose-event', self.expose)
+        image.set_from_file("cache/628_psychic.png")
 
-        box = Gtk.ScrolledWindow()
-        box.set_policy(Gtk.POLICY_AUTOMATIC, Gtk.POLICY_AUTOMATIC)
-        box.add(image)
+        # add the image to the scrolledwindow
+        scrolled_window.add_with_viewport(image)
 
-        window.add(drawing_area)
-        window.add(box)
-        window.set_size_request(300, 300)
-        window.show_all()
+        # add the scrolledwindow to the window
+        self.add(scrolled_window)
 
-    def expose(self, widget, event, window):
-        allocation = widget.get_allocation()
-        if self.temp_height != allocation.height or self.temp_width != allocation.width:
-            self.temp_height = allocation.height
-            self.temp_width = allocation.width
-            pixbuf = self.pixbuf.scale_simple(allocation.width, allocation.height, Gtk.gdk.INTERP_BILINEAR)
-            widget.set_from_pixbuf(pixbuf)
 
-    def close_application(self, widget, event, data=None):
-        Gtk.main_quit()
-        return False
+class MyApplication(Gtk.Application):
 
-if __name__ == "__main__":
-    ScaleImage()
-    Gtk.main()
+    def __init__(self):
+        Gtk.Application.__init__(self)
+
+    def do_activate(self):
+        win = MyWindow(self)
+        win.show_all()
+
+    def do_startup(self):
+        Gtk.Application.do_startup(self)
+
+app = MyApplication()
+exit_status = app.run(sys.argv)
+sys.exit(exit_status)
