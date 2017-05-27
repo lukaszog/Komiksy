@@ -15,15 +15,20 @@ DIR = "cache"
 
 
 class Main(Gtk.Window):
-    """Glowna klasa widoku aplikacji, klasa rysuje obiekty GTK 
-    - pole do wpisania numeru
-    - obrazek
-    - przyciski
+    """Glowna klasa widoku aplikacji, klasa rysuje obiekty GTK.
+     
+    - pole do wpisania numeru.
+    - obrazek.
+    - przyciski.
     - suwak do skali.
     """
+
     def __init__(self):
-        """Konstruktor klasy dziedziczy po Gtk.Window, jego zadanie jest przygotowanie
-        okna, w ktorym wyswietla sie obrazek wraz z przyciskami nawigacyjnymi."""
+        """Konstruktor klasy dziedziczy po Gtk.Window - glowna klasa oplikacji.
+        
+        Zadaniem klasy jest przygotowanie okna, w ktorym wyswietla sie obrazek wraz z przyciskami nawigacyjnymi.
+        """
+
         Gtk.Window.__init__(self)
         self.set_title("XKCD viewer")
         self.set_size_request(500, 300)
@@ -98,6 +103,7 @@ class Main(Gtk.Window):
 
     def scale_moved(self, event):
         """Funkcja dokonuje przeskalowania obrazku, wedlug parametru scale."""
+
         # obliczanie skali
         scale = int(self.h_scale.get_value()) / 100.0
         self.image.set_from_pixbuf(self.pic.scale_simple(self.pic.get_width() * scale,
@@ -137,6 +143,7 @@ class Main(Gtk.Window):
 
     def show_image_direction(self, move):
         """Pobranie obrazka w zaleznosci od kliknietego przycisku {Nastepnny, Losowy, Poprzedni}."""
+
         image_url = XKCD.get_image_direction(self.soup, move)
 
         if image_url is None:
@@ -149,14 +156,23 @@ class Main(Gtk.Window):
 
 
 class XKCD:
-    """Klasa odpowiedzialna za pobieranie danych ze strony xkcd.com."""
+    """Klasa odpowiedzialna za pobieranie danych ze strony xkcd.com.
+    
+    Zdecydowalem sie na uzycie metod statycznych, poniewaz chce traktowac klase jako biblioteke
+    """
+
     def __init__(self):
+        """Pusty konstruktor klasy."""
+
         pass
 
     @staticmethod
     def get_image_direction(soup, move):
-        """Pobranie danych o obrazku w zaleznosci od kliknietego przycisku, dane dla soup sa podawane
-        na podstawie kodu HTML strony."""
+        """Pobranie danych o obrazku w zaleznosci od kliknietego przycisku.
+         
+        Dane dla soup sa podawane na podstawie kodu HTML strony.
+        """
+
         if move == 'prev':
             image_url = soup.find("a", {"href": True, "accesskey": "p"})["href"]
         elif move == 'next':
@@ -176,6 +192,7 @@ class XKCD:
     @staticmethod
     def save_image(url, number):
         """Funkcja, ktora pobiera obrazek do katalogu cache."""
+
         try:
             page = urllib2.urlopen(url)
         except urllib2.HTTPError:
@@ -186,7 +203,7 @@ class XKCD:
 
         image_number = url.split('//')[1].split('/')[2]
         # zapisanie obrazka do katalogu
-        with open(os.path.join(DIR, number+"_"+image_number), "wb") as f:
+        with open(os.path.join(DIR, number + "_" + image_number), "wb") as f:
             f.write(page.read())
             f.close()
         print "Zapisuje plik o numerze: {} i tytule {}".format(number, image_number)
@@ -194,6 +211,7 @@ class XKCD:
     @staticmethod
     def get_image(number):
         """Funkcja, ktora pobiera obrazek z danego adresu url."""
+
         soup = XKCD.load_soup(URL + '/' + number)
         if isinstance(soup, BeautifulSoup):
             image_title = soup.find("div", {"id": "ctitle"})
@@ -216,6 +234,7 @@ class XKCD:
     @staticmethod
     def load_soup(url):
         """Funkcja odpowiedzialna za przygotowanie danej strony do parsowania przez BeautyfoulSoup."""
+
         try:
             page = urllib2.urlopen(url)
         except urllib2.HTTPError as e:
